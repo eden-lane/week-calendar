@@ -35,7 +35,15 @@ export const MonthView = (props: Props) => {
     return (
       <Week key={week[0].toDateString()} style={style}>
         {week.map((day) => (
-          <Day key={day.toDateString()}>{format(day, "dd MMM")}</Day>
+          <Day
+            key={day.toDateString()}
+            style={{
+              background:
+                format(day, "dd MMM") === "01 Jan" ? "green" : "transparent"
+            }}
+          >
+            {format(day, "dd MMM")}
+          </Day>
         ))}
       </Week>
     );
@@ -47,8 +55,6 @@ export const MonthView = (props: Props) => {
     windowSize: 500,
     renderItem
   });
-
-  useEffect(() => {}, []);
 
   const getWeeks = (range: Interval) => {
     const weeks = eachWeekOfInterval(range);
@@ -72,7 +78,7 @@ export const MonthView = (props: Props) => {
     newItems = newWeeks.length;
     direction = -1;
 
-    setWeeks([...newWeeks, ...weeks.slice(0, 3)]);
+    setWeeks([...newWeeks, ...weeks.slice(0, 10)]);
   };
 
   const handleReachBottom = () => {
@@ -90,6 +96,7 @@ export const MonthView = (props: Props) => {
   };
 
   const handleScroll = (ev) => {
+    onScroll(ev);
     if (ev.target.scrollTop <= 0) {
       handleReachTop();
       return;
@@ -101,7 +108,6 @@ export const MonthView = (props: Props) => {
       handleReachBottom();
       return;
     }
-    onScroll(ev);
   };
 
   useEffect(() => {
@@ -114,9 +120,11 @@ export const MonthView = (props: Props) => {
   }, [date]);
 
   useLayoutEffect(() => {
-    rootRef.current?.scroll({
-      top: newItems * DAY_HEIGHT
-    });
+    if (direction === -1) {
+      rootRef.current?.scroll({
+        top: newItems * DAY_HEIGHT
+      });
+    }
   }, [weeks]);
 
   return (
