@@ -72,9 +72,10 @@ export const MonthView = (props: Props) => {
 
           const place = places.get(format(event.startDate, DATE_FORMAT)) || [];
 
-          console.log(format(event.startDate, DATE_FORMAT), place);
-
-          const top = place.length;
+          const top =
+            place.findIndex((p) => !p) === -1
+              ? place.length
+              : place.findIndex((p) => !p);
 
           days.forEach((day) => {
             const key = format(day, DATE_FORMAT);
@@ -82,7 +83,7 @@ export const MonthView = (props: Props) => {
             const weekNumber = getWeek(day);
 
             const place = places.get(key) || [];
-            console.log("get place", key, place);
+
             place[top] = true;
             places.set(key, place);
 
