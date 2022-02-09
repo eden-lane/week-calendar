@@ -21,6 +21,7 @@ type Props = {
 
 const DAY_HEIGHT = 100;
 const REMOVE_ITEMS_COUNT = 10;
+const OFFSCREEN_ITEMS = 10;
 
 let newItems = 0;
 let direction = 0;
@@ -46,7 +47,9 @@ export const MonthView = (props: Props) => {
               color: day.getDay() === 0 || day.getDay() === 6 ? "red" : "black"
             }}
           >
-            {day.getDate() === 1 ? format(day, "dd MMM") : format(day, "dd")}
+            {day.getDate() === 1
+              ? format(day, "dd MMM yyyy")
+              : format(day, "dd")}
           </Day>
         ))}
       </Week>
@@ -62,6 +65,7 @@ export const MonthView = (props: Props) => {
     items: weeks,
     itemSize: DAY_HEIGHT,
     windowSize: height,
+    offscreenItems: OFFSCREEN_ITEMS,
     renderItem
   });
 
@@ -106,6 +110,10 @@ export const MonthView = (props: Props) => {
   const handleScroll = (ev) => {
     onScroll(ev);
     if (weeks.length === 0) return;
+
+    const x = Math.floor(ev.target.scrollTop / DAY_HEIGHT);
+    setDate(weeks[x][6]);
+
     if (ev.target.scrollTop <= 0) {
       handleReachTop();
       return;
@@ -140,16 +148,9 @@ export const MonthView = (props: Props) => {
     }
   }, [weeks, height]);
 
-  useEffect(() => {
-    if (!visibleItems.length) {
-      return;
-    }
-
-    setDate(visibleItems[0][6]);
-  }, [visibleItems]);
-
   return (
     <>
+      <Month>{format(date, "MMMM yyyy")}</Month>
       <DaysOfWeek>
         {eachDayOfInterval({
           start: startOfWeek(new Date()),
@@ -164,6 +165,12 @@ export const MonthView = (props: Props) => {
     </>
   );
 };
+
+const Month = styled.div`
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+  font-weight: 700;
+`;
 
 const DaysOfWeek = styled.div`
   display: flex;
