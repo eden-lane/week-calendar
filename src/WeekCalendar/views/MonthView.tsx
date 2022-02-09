@@ -131,9 +131,9 @@ export const MonthView = (props: Props) => {
       : null;
   };
 
-  const renderItem = (week: Date[], style: React.CSSProperties) => {
+  const renderItem = (week: Date[], style: { offset: string }) => {
     return (
-      <Week key={week[0].toDateString()} style={style}>
+      <Week key={week[0].toDateString()} style={{ top: style.offset }}>
         {week.map((day) => (
           <Day
             key={day.toDateString()}
@@ -254,7 +254,9 @@ export const MonthView = (props: Props) => {
         ))}
       </DaysOfWeek>
       <Days ref={rootRef} onScroll={handleScroll}>
-        <Container style={containerStyle}>{visibleItemsRender}</Container>
+        <Container style={{ height: containerStyle.size }}>
+          {visibleItemsRender}
+        </Container>
       </Days>
     </>
   );
