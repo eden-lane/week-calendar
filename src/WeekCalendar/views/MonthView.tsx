@@ -20,6 +20,7 @@ type Props = {
 };
 
 const DAY_HEIGHT = 100;
+const REMOVE_ITEMS_COUNT = 10;
 
 let newItems = 0;
 let direction = 0;
@@ -82,7 +83,7 @@ export const MonthView = (props: Props) => {
     newItems = newWeeks.length;
     direction = -1;
 
-    setWeeks([...newWeeks, ...weeks.slice(0, 10)]);
+    setWeeks([...newWeeks, ...weeks.slice(0, REMOVE_ITEMS_COUNT)]);
   };
 
   const handleReachBottom = () => {
@@ -95,7 +96,7 @@ export const MonthView = (props: Props) => {
 
     direction = 1;
 
-    setWeeks([...weeks.slice(-10), ...newWeeks]);
+    setWeeks([...weeks.slice(-REMOVE_ITEMS_COUNT), ...newWeeks]);
   };
 
   const handleScroll = (ev) => {
@@ -130,7 +131,7 @@ export const MonthView = (props: Props) => {
       });
     } else {
       rootRef.current?.scroll({
-        top: 600
+        top: REMOVE_ITEMS_COUNT * DAY_HEIGHT - height
       });
     }
   }, [weeks, height]);
