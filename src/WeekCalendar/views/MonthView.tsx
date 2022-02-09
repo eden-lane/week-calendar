@@ -43,11 +43,10 @@ export const MonthView = (props: Props) => {
           <Day
             key={day.toDateString()}
             style={{
-              background:
-                format(day, "dd MMM") === "01 Jan" ? "green" : "transparent"
+              color: day.getDay() === 0 || day.getDay() === 6 ? "red" : "black"
             }}
           >
-            {format(day, "dd MMM")}
+            {day.getDate() === 1 ? format(day, "dd MMM") : format(day, "dd")}
           </Day>
         ))}
       </Week>
@@ -156,7 +155,7 @@ export const MonthView = (props: Props) => {
           start: startOfWeek(new Date()),
           end: endOfWeek(new Date())
         }).map((d) => (
-          <DayOfWeek>{format(d, "EEEEEE")}</DayOfWeek>
+          <DayOfWeek key={format(d, "EEEEEE")}>{format(d, "EEEEEE")}</DayOfWeek>
         ))}
       </DaysOfWeek>
       <Days ref={rootRef} onScroll={handleScroll}>
@@ -189,6 +188,7 @@ const DayOfWeek = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  font-size: 14px;
 
   border-bottom: 1px solid #ccc;
   & + & {
@@ -198,9 +198,9 @@ const DayOfWeek = styled.div`
 
 const Day = styled.div`
   flex: 1 0;
+  font-size: 12px;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  padding: 5px;
   border-bottom: 1px solid #ccc;
   & + & {
     border-left: 1px solid #ccc;

@@ -1,3 +1,4 @@
+import { createGlobalStyle } from "styled-components";
 import { endOfMonth, startOfMonth } from "date-fns";
 import styled from "styled-components";
 import { CalendarEvent, CalendarView } from "./WeekCalendar/types";
@@ -7,9 +8,16 @@ console.clear();
 
 const events: CalendarEvent[] = [];
 
+const GlobalStyle = createGlobalStyle`
+  * {
+    font-family: 'Open Sans';
+  }
+`;
+
 export default function App() {
   return (
     <Root>
+      <GlobalStyle />
       <WeekCalendar
         view={CalendarView.Month}
         events={events}
