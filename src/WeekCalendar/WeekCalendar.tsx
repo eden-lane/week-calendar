@@ -25,7 +25,7 @@ export const WeekCalendar = <TData extends unknown>(props: Props<TData>) => {
 };
 
 const Root = styled.main`
-  border: 1px solid red;
+  border: 1px solid #ccc;
   height: 100%;
   width: 100%;
   overflow: hidden;

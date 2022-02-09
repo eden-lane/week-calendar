@@ -54,7 +54,12 @@ export const MonthView = (props: Props) => {
     );
   };
 
-  const { containerStyle, visibleItems, onScroll } = useVirtualized<Date[]>({
+  const {
+    containerStyle,
+    visibleItems,
+    visibleItemsRender,
+    onScroll
+  } = useVirtualized<Date[]>({
     items: weeks,
     itemSize: DAY_HEIGHT,
     windowSize: height,
@@ -136,16 +141,37 @@ export const MonthView = (props: Props) => {
     }
   }, [weeks, height]);
 
+  useEffect(() => {
+    if (!visibleItems.length) {
+      return;
+    }
+
+    setDate(visibleItems[0][6]);
+  }, [visibleItems]);
+
   return (
     <>
-      <Root ref={rootRef} onScroll={handleScroll}>
-        <Container style={containerStyle}>{visibleItems}</Container>
-      </Root>
+      <DaysOfWeek>
+        {eachDayOfInterval({
+          start: startOfWeek(new Date()),
+          end: endOfWeek(new Date())
+        }).map((d) => (
+          <DayOfWeek>{format(d, "EEEEEE")}</DayOfWeek>
+        ))}
+      </DaysOfWeek>
+      <Days ref={rootRef} onScroll={handleScroll}>
+        <Container style={containerStyle}>{visibleItemsRender}</Container>
+      </Days>
     </>
   );
 };
 
-const Root = styled.div`
+const DaysOfWeek = styled.div`
+  display: flex;
+  overflow-y: scroll;
+`;
+
+const Days = styled.div`
   height: 100%;
   overflow-y: scroll;
 `;
@@ -156,6 +182,18 @@ const Week = styled.div`
   display: flex;
   width: 100%;
   height: ${DAY_HEIGHT}px;
+`;
+
+const DayOfWeek = styled.div`
+  flex: 1 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-bottom: 1px solid #ccc;
+  & + & {
+    border-left: 1px solid #ccc;
+  }
 `;
 
 const Day = styled.div`
