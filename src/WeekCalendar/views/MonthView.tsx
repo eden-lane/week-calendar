@@ -17,7 +17,8 @@ import {
   eachDayOfInterval,
   endOfWeek,
   format,
-  startOfWeek
+  startOfWeek,
+  getWeek
 } from "date-fns";
 import { useVirtualized } from "../hooks/useVirtualized";
 import { CalendarEvent } from "../types";
@@ -25,6 +26,12 @@ import { CalendarEvent } from "../types";
 type Props = {
   events: CalendarEvent[];
   range: Interval;
+};
+
+type DayData<TData = unknown> = {
+  width: number;
+  top: number;
+  event: CalendarEvent<TData>;
 };
 
 const DAY_HEIGHT = 100;
@@ -43,7 +50,7 @@ export const MonthView = (props: Props) => {
   const [date, setDate] = useState<Date>(new Date(range.start));
   const [height, setHeight] = useState(-1);
 
-  const eventsMap = useMemo(() => {
+  const eventsMap = useMemo<Map<string, DayData[]>>(() => {
     const result = new Map();
     events.forEach((event) => {
       if (event.startDate && event.endDate) {
@@ -52,12 +59,27 @@ export const MonthView = (props: Props) => {
           end: event.endDate
         });
 
+        let lastWeekWithEvent = 0;
+        let dayData: DayData;
+
         interval.forEach((day) => {
           const key = format(day, DATE_FORMAT);
           const dayEvents = result.get(key) || [];
 
-          dayEvents.push(event);
-          result.set(key, dayEvents);
+          const weekNumber = getWeek(day);
+
+          if (weekNumber > lastWeekWithEvent) {
+            dayData = {
+              width: 1,
+              top: 1,
+              event
+            };
+            dayEvents.push(dayData);
+            result.set(key, dayEvents);
+            lastWeekWithEvent = weekNumber;
+          } else {
+            dayData.width += 1;
+          }
         });
       } else if (event.startDateTime && event.endDateTime) {
       }
@@ -72,9 +94,13 @@ export const MonthView = (props: Props) => {
 
   const renderEvents = (date: Date) => {
     const key = format(date, DATE_FORMAT);
-    const events = eventsMap.get(key);
-    return events
-      ? events.map((event) => <Event key={event.id}>{event.title}</Event>)
+    const dayData = eventsMap.get(key);
+    return dayData
+      ? dayData.map((data) => (
+          <Event style={{ width: `${100 * data.width}%` }} key={data.event.id}>
+            {data.event.title}
+          </Event>
+        ))
       : null;
   };
 
