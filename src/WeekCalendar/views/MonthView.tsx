@@ -52,38 +52,56 @@ export const MonthView = (props: Props) => {
 
   const eventsMap = useMemo<Map<string, DayData[]>>(() => {
     const result = new Map();
-    events.forEach((event) => {
-      if (event.startDate && event.endDate) {
-        const interval = eachDayOfInterval({
-          start: event.startDate,
-          end: event.endDate
-        });
+    const places = new Map<string, boolean[]>();
+    events
+      .sort((a, b) => {
+        return (
+          (a.startDate?.getTime() || a.startDateTime!.getTime()) -
+          (b.startDate?.getTime() || b.startDateTime!.getTime())
+        );
+      })
+      .forEach((event) => {
+        if (event.startDate && event.endDate) {
+          const days = eachDayOfInterval({
+            start: event.startDate,
+            end: event.endDate
+          });
 
-        let lastWeekWithEvent = 0;
-        let dayData: DayData;
+          let lastWeekWithEvent = 0;
+          let dayData: DayData;
 
-        interval.forEach((day) => {
-          const key = format(day, DATE_FORMAT);
-          const dayEvents = result.get(key) || [];
+          const place = places.get(format(event.startDate, DATE_FORMAT)) || [];
 
-          const weekNumber = getWeek(day);
+          console.log(format(event.startDate, DATE_FORMAT), place);
 
-          if (weekNumber > lastWeekWithEvent) {
-            dayData = {
-              width: 1,
-              top: 1,
-              event
-            };
-            dayEvents.push(dayData);
-            result.set(key, dayEvents);
-            lastWeekWithEvent = weekNumber;
-          } else {
-            dayData.width += 1;
-          }
-        });
-      } else if (event.startDateTime && event.endDateTime) {
-      }
-    });
+          const top = place.length;
+
+          days.forEach((day) => {
+            const key = format(day, DATE_FORMAT);
+            const dayEvents = result.get(key) || [];
+            const weekNumber = getWeek(day);
+
+            const place = places.get(key) || [];
+            console.log("get place", key, place);
+            place[top] = true;
+            places.set(key, place);
+
+            if (weekNumber > lastWeekWithEvent) {
+              dayData = {
+                width: 1,
+                top,
+                event
+              };
+              dayEvents.push(dayData);
+              result.set(key, dayEvents);
+              lastWeekWithEvent = weekNumber;
+            } else {
+              dayData.width += 1;
+            }
+          });
+        } else if (event.startDateTime && event.endDateTime) {
+        }
+      });
 
     return result;
   }, [events]);
@@ -97,7 +115,15 @@ export const MonthView = (props: Props) => {
     const dayData = eventsMap.get(key);
     return dayData
       ? dayData.map((data) => (
-          <Event style={{ width: `${100 * data.width}%` }} key={data.event.id}>
+          <Event
+            style={{
+              width: `${100 * data.width}%`,
+              transform: `translateY(calc(${100 * data.top}% + ${
+                1 * data.top
+              }px))`
+            }}
+            key={data.event.id}
+          >
             {data.event.title}
           </Event>
         ))
@@ -296,4 +322,5 @@ const Event = styled.div`
   color: #fff;
   box-sizing: border-box;
   z-index: 1;
+  margin-bottom: 1px;
 `;

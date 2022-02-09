@@ -27,6 +27,24 @@ const events: CalendarEvent<Task>[] = [
       background: "#cddc39",
       color: "#000"
     }
+  },
+  {
+    id: "3",
+    title: "Work",
+    startDate: new Date(2022, 2, 12),
+    endDate: new Date(2022, 2, 22)
+  },
+  {
+    id: "4",
+    title: "Day off",
+    startDate: new Date(2022, 2, 13),
+    endDate: new Date(2022, 2, 13)
+  },
+  {
+    id: "5",
+    title: "Task",
+    startDate: new Date(2022, 2, 13),
+    endDate: new Date(2022, 2, 13)
   }
 ];
 
