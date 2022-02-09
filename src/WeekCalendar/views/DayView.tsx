@@ -4,7 +4,8 @@ import {
   eachDayOfInterval,
   eachHourOfInterval,
   endOfDay,
-  startOfDay
+  startOfDay,
+  format
 } from "date-fns";
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
@@ -45,15 +46,18 @@ export const DayView = (props: Props) => {
     );
   };
 
-  const { containerStyle, visibleItemsRender, onScroll } = useVirtualized<Date>(
-    {
-      items: days,
-      itemSize: width / 7,
-      windowSize: width,
-      offscreenItems: 10,
-      renderItem
-    }
-  );
+  const {
+    containerStyle,
+    visibleItemsRender,
+    visibleItems,
+    onScroll
+  } = useVirtualized<Date>({
+    items: days,
+    itemSize: width / 7,
+    windowSize: width,
+    offscreenItems: 10,
+    renderItem
+  });
 
   const getDays = (range: Interval) => {
     return eachDayOfInterval(range);
@@ -72,7 +76,15 @@ export const DayView = (props: Props) => {
     <>
       <Days ref={rootRef}>
         <Container style={{ width: containerStyle.size }}>
-          {visibleItemsRender}
+          <Header>
+            {visibleItems.map((date) => (
+              <Date width={width / 7}>
+                <div>{format(date, "EE")}</div>
+                <div>{format(date, "dd")}</div>
+              </Date>
+            ))}
+          </Header>
+          <Hours>{visibleItemsRender}</Hours>
         </Container>
       </Days>
     </>
@@ -82,12 +94,35 @@ export const DayView = (props: Props) => {
 const Days = styled.div`
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: scroll;
 `;
 
 const Container = styled.div`
   position: relative;
   white-space: nowrap;
+  flex-grow: 1;
+  overflow: hidden;
+`;
+
+const Header = styled.header`
+  white-space: nowrap;
+`;
+
+const Date = styled.div<{ width: number }>`
+  width: ${(p) => p.width}px;
+  display: inline-block;
+  padding: 1px 5px;
+  border-bottom: 1px solid #ccc;
+
+  & div:nth-child(1) {
+    font-size: 12px;
+  }
+
+  & div:nth-child(2) {
+    font-size: 24px;
+  }
 `;
 
 const Day = styled.div<{ width: number }>`
@@ -98,6 +133,10 @@ const Day = styled.div<{ width: number }>`
   & + & {
     border-left: 1px solid #ccc;
   }
+`;
+
+const Hours = styled.div`
+  overflow-y: scroll;
 `;
 
 const Hour = styled.div`

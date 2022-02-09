@@ -51,6 +51,7 @@ const events: CalendarEvent<Task>[] = [
 const GlobalStyle = createGlobalStyle`
   * {
     font-family: 'Open Sans';
+    box-sizing: border-box;
   }
 `;
 
