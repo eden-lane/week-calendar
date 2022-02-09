@@ -122,7 +122,7 @@ export const MonthView = (props: Props) => {
         end: endOfWeek(endOfMonth(add(date, { months: 1 })))
       })
     ]);
-  }, [date]);
+  }, []);
 
   useLayoutEffect(() => {
     if (direction === -1) {
@@ -131,7 +131,7 @@ export const MonthView = (props: Props) => {
       });
     } else {
       rootRef.current?.scroll({
-        top: REMOVE_ITEMS_COUNT * DAY_HEIGHT - height
+        top: Math.max(REMOVE_ITEMS_COUNT * DAY_HEIGHT - height, 0)
       });
     }
   }, [weeks, height]);
@@ -160,8 +160,11 @@ const Week = styled.div`
 
 const Day = styled.div`
   flex: 1 0;
-  border: 1px solid red;
   display: flex;
   justify-content: center;
   align-items: center;
+  border-bottom: 1px solid #ccc;
+  & + & {
+    border-left: 1px solid #ccc;
+  }
 `;
