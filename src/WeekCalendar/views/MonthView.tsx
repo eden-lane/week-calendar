@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import styled from "styled-components";
 import {
   Interval,
@@ -14,8 +20,10 @@ import {
   startOfWeek
 } from "date-fns";
 import { useVirtualized } from "../hooks/useVirtualized";
+import { CalendarEvent } from "../types";
 
 type Props = {
+  events: CalendarEvent[];
   range: Interval;
 };
 
@@ -26,16 +34,49 @@ const OFFSCREEN_ITEMS = 10;
 let newItems = 0;
 let direction = 0;
 
+const DATE_FORMAT = "dd.MM.yyyy";
+
 export const MonthView = (props: Props) => {
-  const { range } = props;
+  const { range, events } = props;
   const rootRef = useRef<HTMLDivElement>(null);
   const [weeks, setWeeks] = useState<Date[][]>([]);
   const [date, setDate] = useState<Date>(new Date(range.start));
   const [height, setHeight] = useState(-1);
 
+  const eventsMap = useMemo(() => {
+    const result = new Map();
+    events.forEach((event) => {
+      if (event.startDate && event.endDate) {
+        const interval = eachDayOfInterval({
+          start: event.startDate,
+          end: event.endDate
+        });
+
+        interval.forEach((day) => {
+          const key = format(day, DATE_FORMAT);
+          const dayEvents = result.get(key) || [];
+
+          dayEvents.push(event);
+          result.set(key, dayEvents);
+        });
+      } else if (event.startDateTime && event.endDateTime) {
+      }
+    });
+
+    return result;
+  }, [events]);
+
   useEffect(() => {
     setHeight(rootRef.current?.offsetHeight ?? 0);
   }, []);
+
+  const renderEvents = (date: Date) => {
+    const key = format(date, DATE_FORMAT);
+    const events = eventsMap.get(key);
+    return events
+      ? events.map((event) => <Event key={event.id}>{event.title}</Event>)
+      : null;
+  };
 
   const renderItem = (week: Date[], style: React.CSSProperties) => {
     return (
@@ -47,21 +88,21 @@ export const MonthView = (props: Props) => {
               color: day.getDay() === 0 || day.getDay() === 6 ? "red" : "black"
             }}
           >
-            {day.getDate() === 1
-              ? format(day, "dd MMM yyyy")
-              : format(day, "dd")}
+            <div>
+              {day.getDate() === 1
+                ? format(day, "dd MMM yyyy")
+                : format(day, "dd")}
+            </div>
+            <Events>{renderEvents(day)}</Events>
           </Day>
         ))}
       </Week>
     );
   };
 
-  const {
-    containerStyle,
-    visibleItems,
-    visibleItemsRender,
-    onScroll
-  } = useVirtualized<Date[]>({
+  const { containerStyle, visibleItemsRender, onScroll } = useVirtualized<
+    Date[]
+  >({
     items: weeks,
     itemSize: DAY_HEIGHT,
     windowSize: height,
@@ -207,9 +248,26 @@ const Day = styled.div`
   flex: 1 0;
   font-size: 12px;
   display: flex;
-  padding: 5px;
+  flex-direction: column;
   border-bottom: 1px solid #ccc;
   & + & {
     border-left: 1px solid #ccc;
   }
+`;
+
+const Events = styled.div`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+`;
+
+const Event = styled.div`
+  position: absolute;
+  width: 100%;
+  background: #03a9f4;
+  font-size: 12px;
+  padding: 2px 4px;
+  color: #fff;
+  box-sizing: border-box;
+  z-index: 1;
 `;

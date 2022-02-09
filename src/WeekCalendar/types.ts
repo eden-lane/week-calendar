@@ -13,5 +13,5 @@ export interface CalendarEvent<TData = unknown> {
   endDate?: Date;
   startDateTime?: Date;
   endDateTime?: Date;
-  data: TData;
+  data?: TData;
 }

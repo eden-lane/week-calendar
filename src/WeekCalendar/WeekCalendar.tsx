@@ -16,7 +16,7 @@ export const WeekCalendar = <TData extends unknown>(props: Props<TData>) => {
     case CalendarView.Month:
       return (
         <Root>
-          <MonthView range={range} />
+          <MonthView range={range} events={events} />
         </Root>
       );
     default:
