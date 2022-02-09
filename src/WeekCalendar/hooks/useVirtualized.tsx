@@ -22,7 +22,7 @@ export const useVirtualized = <T extends unknown>(props: Props<T>) => {
   const visibleItemsCount =
     Math.floor(windowSize / itemSize) + OFFSCREEN_ITEMS * 2;
   const containerStyle: React.CSSProperties = {
-    height: `${15 * itemSize}px`,
+    height: `${(windowSize / itemSize + 4) * itemSize}px`,
     position: "relative"
   };
 

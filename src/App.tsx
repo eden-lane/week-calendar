@@ -20,5 +20,5 @@ export default function App() {
 }
 
 const Root = styled.div`
-  height: 500px;
+  height: 400px;
 `;

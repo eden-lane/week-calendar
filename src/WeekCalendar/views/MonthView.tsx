@@ -29,7 +29,11 @@ export const MonthView = (props: Props) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const [weeks, setWeeks] = useState<Date[][]>([]);
   const [date, setDate] = useState<Date>(new Date(range.start));
-  const heightRef = useRef<number>(-1);
+  const [height, setHeight] = useState(-1);
+
+  useEffect(() => {
+    setHeight(rootRef.current?.offsetHeight ?? 0);
+  }, []);
 
   const renderItem = (week: Date[], style: React.CSSProperties) => {
     return (
@@ -52,7 +56,7 @@ export const MonthView = (props: Props) => {
   const { containerStyle, visibleItems, onScroll } = useVirtualized<Date[]>({
     items: weeks,
     itemSize: DAY_HEIGHT,
-    windowSize: 500,
+    windowSize: height,
     renderItem
   });
 
@@ -89,14 +93,14 @@ export const MonthView = (props: Props) => {
       end: endOfWeek(endOfMonth(add(lastDate, { months: 1 })))
     });
 
-    newItems = newWeeks.length;
     direction = 1;
 
-    setWeeks([...weeks.slice(3), ...newWeeks]);
+    setWeeks([...weeks.slice(-10), ...newWeeks]);
   };
 
   const handleScroll = (ev) => {
     onScroll(ev);
+    if (weeks.length === 0) return;
     if (ev.target.scrollTop <= 0) {
       handleReachTop();
       return;
@@ -124,13 +128,19 @@ export const MonthView = (props: Props) => {
       rootRef.current?.scroll({
         top: newItems * DAY_HEIGHT
       });
+    } else {
+      rootRef.current?.scroll({
+        top: 600
+      });
     }
-  }, [weeks]);
+  }, [weeks, height]);
 
   return (
-    <Root ref={rootRef} onScroll={handleScroll}>
-      <Container style={containerStyle}>{visibleItems}</Container>
-    </Root>
+    <>
+      <Root ref={rootRef} onScroll={handleScroll}>
+        <Container style={containerStyle}>{visibleItems}</Container>
+      </Root>
+    </>
   );
 };
 
