@@ -7,7 +7,8 @@ import {
   startOfDay,
   format,
   startOfToday,
-  endOfToday
+  endOfToday,
+  areIntervalsOverlapping
 } from "date-fns";
 import React, {
   useEffect,
@@ -25,6 +26,7 @@ type EventData<TData = unknown> = {
   offset: number;
   width: number;
   event: CalendarEvent<TData>;
+  overlaps: EventData<TData>[];
 };
 
 type Props = {
@@ -51,53 +53,129 @@ export const DayView = (props: Props) => {
   const scrollPosition = useRef(-1);
 
   const eventsMap = useMemo<Map<string, EventData[]>>(() => {
-    const result = new Map();
+    const result = new Map<string, EventData[]>();
 
-    events.forEach((event) => {
-      if (event.startDateTime && event.endDateTime) {
-        const days = eachDayOfInterval({
-          start: event.startDateTime,
-          end: event.endDateTime
-        });
-
-        console.log(days);
-
-        days.forEach((day, index) => {
-          const key = format(day, DATE_FORMAT);
-          const l = days.length;
-          let startDateTime;
-          let endDateTime;
-
-          if (index === 0) {
-            startDateTime = event.startDateTime;
-          } else {
-            startDateTime = startOfDay(day);
-          }
-
-          if (index === l - 1) {
-            endDateTime = event.endDateTime;
-          } else {
-            endDateTime = endOfDay(day);
-          }
-
-          const dateEvents = result.get(key) || [];
-          dateEvents.push({
-            event,
-            offset: 0,
-            width: 1,
-            startDateTime,
-            endDateTime
+    events
+      .sort((a, b) => {
+        return (
+          (a.startDate?.getTime() || a.startDateTime!.getTime()) -
+          (b.startDate?.getTime() || b.startDateTime!.getTime())
+        );
+      })
+      .forEach((event) => {
+        if (event.startDateTime && event.endDateTime) {
+          const days = eachDayOfInterval({
+            start: event.startDateTime,
+            end: event.endDateTime
           });
 
-          result.set(key, dateEvents);
+          days.forEach((day, index) => {
+            const key = format(day, DATE_FORMAT);
+            const l = days.length;
+            let startDateTime;
+            let endDateTime;
+
+            if (index === 0) {
+              startDateTime = event.startDateTime;
+            } else {
+              startDateTime = startOfDay(day);
+            }
+
+            if (index === l - 1) {
+              endDateTime = event.endDateTime;
+            } else {
+              endDateTime = endOfDay(day);
+            }
+
+            const dateEvents = result.get(key) || [];
+            dateEvents.push({
+              event: {
+                ...event,
+                startDateTime,
+                endDateTime
+              },
+              offset: 0,
+              width: 1,
+              overlaps: []
+            });
+
+            result.set(key, dateEvents);
+          });
+        }
+      });
+
+    // Filling up array of overlapping events
+    result.forEach((day) => {
+      day.forEach((mainEventData) => {
+        const mainEventInterval = {
+          start: mainEventData.event.startDateTime!,
+          end: mainEventData.event.endDateTime!
+        };
+
+        day.forEach((eventData) => {
+          if (mainEventData === eventData) {
+            return;
+          }
+
+          const eventInterval = {
+            start: eventData.event.startDateTime!,
+            end: eventData.event.endDateTime!
+          };
+
+          if (areIntervalsOverlapping(mainEventInterval, eventInterval)) {
+            mainEventData.overlaps.push(eventData);
+          }
         });
-      }
+      });
     });
+
+    // Setting up width
+    result.forEach((day) => {
+      day.forEach((eventData) => {
+        let count = 1;
+        let offset = eventData.offset;
+
+        eventData.overlaps.forEach((overlapData) => {
+          const mainInterval = {
+            start: eventData.event.startDateTime!,
+            end: eventData.event.endDateTime!
+          };
+
+          const overlapInterval = {
+            start: overlapData.event.startDateTime!,
+            end: overlapData.event.endDateTime!
+          };
+
+          const areOverlapping = areIntervalsOverlapping(
+            mainInterval,
+            overlapInterval
+          );
+
+          if (areOverlapping && overlapData.offset <= offset) {
+            offset += 1;
+          }
+
+          const overlapsItems = overlapData.overlaps.filter((overlapData) => {
+            const overlapInterval = {
+              start: overlapData.event.startDateTime!,
+              end: overlapData.event.endDateTime!
+            };
+
+            return areIntervalsOverlapping(mainInterval, overlapInterval);
+          });
+
+          count = Math.max(count, overlapsItems.length + 1);
+        });
+
+        eventData.width = 1 / count;
+        eventData.offset = offset;
+      });
+    });
+
+    console.log(result);
 
     return result;
   }, [events]);
-
-  console.log(eventsMap);
 
   useEffect(() => {
     setWidth((rootRef.current?.offsetWidth ?? 0) - ASIDE_WIDTH);
@@ -122,7 +200,8 @@ export const DayView = (props: Props) => {
           style={{
             top: position.top,
             height: position.height,
-            width: eventWidth
+            width: eventWidth,
+            left: event.offset * eventWidth
           }}
           key={event.event.id}
         >
@@ -362,4 +441,7 @@ const Event = styled.div`
   background: #03a9f4;
   font-size: 12px;
   color: #fff;
+  padding: 3px;
+  margin: 1px;
+  border: 1px solid #fff;
 `;
