@@ -4,7 +4,7 @@ type Props<T> = {
   items: T[];
   itemSize: number;
   windowSize: number;
-  renderItem(item: T, params: { offset: string }): ReactNode;
+  renderItem(item: T, params: { offset: number }): ReactNode;
   offscreenItems?: number;
 };
 
@@ -45,7 +45,7 @@ export const useVirtualized = <T extends unknown>(props: Props<T>) => {
   const visibleItemsRender = useMemo(() => {
     return visibleItems.map((item, index) =>
       renderItem(item, {
-        offset: `${(from + index) * itemSize}px`
+        offset: (from + index) * itemSize
       })
     );
   }, [visibleItems, itemSize, from]);

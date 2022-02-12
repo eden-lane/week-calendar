@@ -20,6 +20,8 @@ type Props = {
 };
 
 const HOUR_HEIGHT = 100;
+const HEADER_HEIGHT = 50;
+const ASIDE_WIDTH = 60;
 
 export const DayView = (props: Props) => {
   const { range, events } = props;
@@ -32,14 +34,22 @@ export const DayView = (props: Props) => {
     setWidth(rootRef.current?.offsetWidth ?? 0);
   }, []);
 
-  const renderItem = (day: Date, style: React.CSSProperties) => {
+  const renderItem = (day: Date, style: { offset: number }) => {
     const hours = eachHourOfInterval({
       start: startOfDay(day),
       end: endOfDay(day)
     });
 
     return (
-      <Day key={day.toDateString()} width={width / 7}>
+      <Day
+        key={day.toDateString()}
+        style={{
+          position: "absolute",
+          left: `${style.offset + ASIDE_WIDTH}px`,
+          top: `${HEADER_HEIGHT}px`
+        }}
+        width={width / 7}
+      >
         {hours.map((h) => (
           <Hour key={h} />
         ))}
@@ -83,19 +93,21 @@ export const DayView = (props: Props) => {
               start: startOfToday(),
               end: endOfToday()
             }).map((h) => (
-              <AsideHour key={h.toDateString()}>{format(h, "HH:mm")}</AsideHour>
+              <AsideHour key={h.toDateString()}>
+                <AsideHourLabel>{format(h, "HH:mm")}</AsideHourLabel>
+              </AsideHour>
             ))}
           </Aside>
+          <Header>
+            {visibleItems.map((date) => (
+              <Date width={width / 7}>
+                <div>{format(date, "EE")}</div>
+                <div>{format(date, "dd")}</div>
+              </Date>
+            ))}
+          </Header>
           <Content style={{ width: containerStyle.size }}>
-            <Header>
-              {visibleItems.map((date) => (
-                <Date width={width / 7}>
-                  <div>{format(date, "EE")}</div>
-                  <div>{format(date, "dd")}</div>
-                </Date>
-              ))}
-            </Header>
-            <Hours>{visibleItemsRender}</Hours>
+            {visibleItemsRender}
           </Content>
         </Container>
       </Days>
@@ -119,7 +131,7 @@ const Container = styled.div`
 `;
 
 const Header = styled.header`
-  height: 50px;
+  height: ${HEADER_HEIGHT}px;
 
   white-space: nowrap;
   position: sticky;
@@ -151,20 +163,15 @@ const Day = styled.div<{ width: number }>`
   height: 100%;
   display: inline-block;
   flex-shrink: 0;
-
-  & + & {
-    border-left: 1px solid #ccc;
-  }
 `;
 
 const Aside = styled.aside<{ width: number }>`
   width: ${(p) => p.width}px;
   left: 0;
   position: sticky;
-  flex: 0 0 60px;
-  padding: 5px;
+  flex: 0 0 ${ASIDE_WIDTH}px;
+
   z-index: 2;
-  border-right: 1px solid #ccc;
 `;
 
 const Content = styled.div`
@@ -180,6 +187,7 @@ const Hour = styled.div`
   width: 100%;
   height: ${HOUR_HEIGHT}px;
   border-bottom: 1px solid #ccc;
+  border-right: 1px solid #ccc;
 `;
 
 const AsideHour = styled.div`
@@ -188,5 +196,12 @@ const AsideHour = styled.div`
   justify-content: center;
   font-size: 12px;
   height: ${HOUR_HEIGHT}px;
-  transform: translateY(-14px);
+
+  border-right: 1px solid #ccc;
+  background: #fff;
+`;
+
+const AsideHourLabel = styled.span`
+  transform: translateY(-10px);
+  z-index: 2;
 `;
