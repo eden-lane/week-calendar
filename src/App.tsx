@@ -69,6 +69,12 @@ const events: CalendarEvent<Task>[] = [
     title: "Task 5",
     startDateTime: new Date(2022, 0, 26, 7),
     endDateTime: new Date(2022, 0, 26, 9)
+  },
+  {
+    id: "10",
+    title: "Task 6",
+    startDateTime: new Date(2022, 0, 26, 4),
+    endDateTime: new Date(2022, 0, 26, 6)
   }
 ];
 

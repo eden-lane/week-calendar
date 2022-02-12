@@ -166,7 +166,7 @@ export const DayView = (props: Props) => {
           count = Math.max(count, overlappingItems.length);
         });
 
-        mainEventData.width = 1 / count;
+        mainEventData.width = Math.min(1 / count, 1 / (offset + 1));
         mainEventData.offset = offset;
       });
     });
