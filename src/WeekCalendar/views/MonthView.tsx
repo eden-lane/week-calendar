@@ -131,9 +131,9 @@ export const MonthView = (props: Props) => {
       : null;
   };
 
-  const renderItem = (week: Date[], style: { offset: string }) => {
+  const renderItem = (week: Date[], style: { offset: number }) => {
     return (
-      <Week key={week[0].toDateString()} style={{ top: style.offset }}>
+      <Week key={week[0].toDateString()} style={{ top: `${style.offset}px` }}>
         {week.map((day) => (
           <Day
             key={day.toDateString()}

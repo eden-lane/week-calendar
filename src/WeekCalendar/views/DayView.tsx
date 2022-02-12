@@ -9,7 +9,7 @@ import {
   startOfToday,
   endOfToday
 } from "date-fns";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useVirtualized } from "../hooks/useVirtualized";
 import { CalendarEvent } from "../types";
@@ -17,21 +17,27 @@ import { CalendarEvent } from "../types";
 type Props = {
   range: Interval;
   events: CalendarEvent[];
+  daysCount: number;
 };
 
 const HOUR_HEIGHT = 100;
 const HEADER_HEIGHT = 50;
 const ASIDE_WIDTH = 60;
+const REMOVE_ITEMS_COUNT = 10;
 
 export const DayView = (props: Props) => {
-  const { range, events } = props;
+  const { range, events, daysCount } = props;
   const rootRef = useRef<HTMLDivElement>(null);
+  const contRef = useRef<HTMLDivElement>(null);
   const [days, setDays] = useState<Date[]>([]);
   const [width, setWidth] = useState(-1);
   const [date, setDate] = useState(range.start);
+  const direction = useRef(0);
+  const itemsDiff = useRef(-1);
+  const scrollPosition = useRef(-1);
 
   useEffect(() => {
-    setWidth(rootRef.current?.offsetWidth ?? 0);
+    setWidth((rootRef.current?.offsetWidth ?? 0) - ASIDE_WIDTH);
   }, []);
 
   const renderItem = (day: Date, style: { offset: number }) => {
@@ -46,9 +52,9 @@ export const DayView = (props: Props) => {
         style={{
           position: "absolute",
           left: `${style.offset + ASIDE_WIDTH}px`,
-          top: `${HEADER_HEIGHT}px`
+          top: `${HEADER_HEIGHT}px`,
+          width: `${width / daysCount}px`
         }}
-        width={width / 7}
       >
         {hours.map((h) => (
           <Hour key={h} />
@@ -64,9 +70,9 @@ export const DayView = (props: Props) => {
     onScroll
   } = useVirtualized<Date>({
     items: days,
-    itemSize: width / 7,
+    itemSize: width / daysCount,
     windowSize: width,
-    offscreenItems: 10,
+    offscreenItems: 20,
     renderItem
   });
 
@@ -74,35 +80,91 @@ export const DayView = (props: Props) => {
     return eachDayOfInterval(range);
   };
 
+  const handleReachLeft = () => {
+    const firstDate = days[0];
+
+    const newDays = getDays({
+      start: sub(firstDate, { weeks: 1 }),
+      end: sub(firstDate, { days: 1 })
+    });
+
+    setDays([...newDays, ...days.slice(0, REMOVE_ITEMS_COUNT)]);
+    direction.current = -1;
+    itemsDiff.current = newDays.length;
+  };
+
+  const handleReachRight = () => {
+    const lastDate = days[days.length - 1];
+
+    const newDays = getDays({
+      start: add(lastDate, { days: 1 }),
+      end: add(lastDate, { weeks: 2 })
+    });
+
+    direction.current = 1;
+    itemsDiff.current = days.length - REMOVE_ITEMS_COUNT;
+    scrollPosition.current = contRef.current?.scrollLeft ?? 0;
+    setDays([...days.slice(-REMOVE_ITEMS_COUNT), ...newDays]);
+  };
+
   useEffect(() => {
     setDays(
       getDays({
-        start: sub(date, { weeks: 2 }),
+        start: sub(date, { weeks: 3 }),
         end: add(date, { weeks: 3 })
       })
     );
   }, []);
 
+  console.log(days.length);
+
+  const handleScroll = (ev) => {
+    onScroll(ev);
+
+    if (days.length === 0) return;
+
+    if (ev.target.scrollLeft <= 0) {
+      handleReachLeft();
+      return;
+    }
+    if (ev.target.scrollLeft + ev.target.clientWidth >= ev.target.scrollWidth) {
+      handleReachRight();
+      return;
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (direction.current === -1) {
+      contRef.current?.scroll({
+        left: (itemsDiff.current * width) / daysCount
+      });
+    } else {
+      contRef.current?.scroll({
+        left: scrollPosition.current - itemsDiff.current * (width / daysCount)
+      });
+    }
+  });
+
   return (
     <>
       <Days ref={rootRef}>
-        <Container>
+        <Container ref={contRef} onScroll={handleScroll}>
           <Aside width={width / visibleItems.length}>
             <Header></Header>
             {eachHourOfInterval({
               start: startOfToday(),
               end: endOfToday()
             }).map((h) => (
-              <AsideHour key={h.toDateString()}>
+              <AsideHour key={h.getHours()}>
                 <AsideHourLabel>{format(h, "HH:mm")}</AsideHourLabel>
               </AsideHour>
             ))}
           </Aside>
           <Header>
             {visibleItems.map((date) => (
-              <Date width={width / 7}>
+              <Date key={date.getTime()} width={width / daysCount}>
                 <div>{format(date, "EE")}</div>
-                <div>{format(date, "dd")}</div>
+                <div>{format(date, "dd, MMM")}</div>
               </Date>
             ))}
           </Header>
@@ -158,8 +220,7 @@ const Date = styled.div<{ width: number }>`
   }
 `;
 
-const Day = styled.div<{ width: number }>`
-  width: ${(p) => p.width}px;
+const Day = styled.div`
   height: 100%;
   display: inline-block;
   flex-shrink: 0;
@@ -177,10 +238,6 @@ const Aside = styled.aside<{ width: number }>`
 const Content = styled.div`
   display: flex;
   flex-direction: column;
-`;
-
-const Hours = styled.div`
-  display: flex;
 `;
 
 const Hour = styled.div`
