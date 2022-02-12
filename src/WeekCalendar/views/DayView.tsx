@@ -5,19 +5,100 @@ import {
   eachHourOfInterval,
   endOfDay,
   startOfDay,
-  format
+  format,
+  startOfToday,
+  endOfToday
 } from "date-fns";
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useVirtualized } from "../hooks/useVirtualized";
 import { CalendarEvent } from "../types";
 
+const Days = styled.div`
+  height: 100%;
+  width: 100%;
+  display: flex;
+`;
+
+const Container = styled.div`
+  display: flex;
+  position: relative;
+  /* white-space: nowrap; */
+  flex-grow: 1;
+  overflow-x: scroll;
+  overflow-y: scroll;
+`;
+
+const Header = styled.header`
+  height: 60px;
+
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  z-index: 1;
+`;
+
+const Date = styled.div<{ width: number }>`
+  width: ${(p) => p.width}px;
+  display: inline-block;
+  padding: 1px 5px;
+  border-bottom: 1px solid #ccc;
+  flex-shrink: 0;
+
+  & div:nth-child(1) {
+    font-size: 12px;
+  }
+
+  & div:nth-child(2) {
+    font-size: 24px;
+  }
+`;
+
+const Day = styled.div<{ width: number }>`
+  width: ${(p) => p.width}px;
+  height: 100%;
+  display: inline-block;
+  flex-shrink: 0;
+
+  & + & {
+    border-left: 1px solid #ccc;
+  }
+`;
+
+const Aside = styled.aside<{ width: number }>`
+  width: ${(p) => p.width}px;
+  left: 0;
+  position: sticky;
+  flex: 0 0 60px;
+  padding: 5px;
+  z-index: 2;
+  border-right: 1px solid #ccc;
+`;
+
+const Content = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const Hours = styled.div`
+  display: flex;
+`;
+
+const HOUR_HEIGHT = 100;
+
+const Hour = styled.div`
+  width: 100%;
+  height: ${HOUR_HEIGHT}px;
+  border-bottom: 1px solid #ccc;
+`;
+
 type Props = {
   range: Interval;
   events: CalendarEvent[];
 };
-
-const HOUR_HEIGHT = 100;
 
 export const DayView = (props: Props) => {
   const { range, events } = props;
@@ -31,7 +112,6 @@ export const DayView = (props: Props) => {
   }, []);
 
   const renderItem = (day: Date, style: React.CSSProperties) => {
-    console.log(day);
     const hours = eachHourOfInterval({
       start: startOfDay(day),
       end: endOfDay(day)
@@ -75,9 +155,16 @@ export const DayView = (props: Props) => {
   return (
     <>
       <Days ref={rootRef}>
-        <Container style={{ width: containerStyle.size }}>
-          <Aside>12</Aside>
-          <Content>
+        <Container>
+          <Aside width={width / visibleItems.length}>
+            {eachHourOfInterval({
+              start: startOfToday(),
+              end: endOfToday()
+            }).map((h) => (
+              <Hour key={h.toDateString()}>{format(h, "HH:mm")}</Hour>
+            ))}
+          </Aside>
+          <Content style={{ width: containerStyle.size }}>
             <Header>
               {visibleItems.map((date) => (
                 <Date width={width / 7}>
@@ -93,79 +180,3 @@ export const DayView = (props: Props) => {
     </>
   );
 };
-
-const Days = styled.div`
-  height: 100%;
-  width: 100%;
-  display: flex;
-`;
-
-const Container = styled.div`
-  display: flex;
-  position: relative;
-  white-space: nowrap;
-  flex-grow: 1;
-  overflow-x: scroll;
-  overflow-y: hidden;
-`;
-
-const Header = styled.header`
-  display: flex;
-  white-space: nowrap;
-  position: sticky;
-  top: 0;
-  background: #fff;
-`;
-
-const Date = styled.div<{ width: number }>`
-  width: ${(p) => p.width}px;
-  display: inline-block;
-  padding: 1px 5px;
-  border-bottom: 1px solid #ccc;
-  flex-shrink: 0;
-
-  & div:nth-child(1) {
-    font-size: 12px;
-  }
-
-  & div:nth-child(2) {
-    font-size: 24px;
-  }
-`;
-
-const Day = styled.div<{ width: number }>`
-  width: ${(p) => p.width}px;
-  height: 100%;
-  display: inline-block;
-  flex-shrink: 0;
-
-  & + & {
-    border-left: 1px solid #ccc;
-  }
-`;
-
-const Aside = styled.aside`
-  left: 0;
-  top: 0;
-  bottom: 0;
-  position: sticky;
-  flex: 1 0 80px;
-  background: #fff;
-  z-index: 2;
-`;
-
-const Content = styled.div`
-  display: flex;
-  flex-direction: column;
-  overflow-y: scroll;
-`;
-
-const Hours = styled.div`
-  display: flex;
-`;
-
-const Hour = styled.div`
-  width: 100%;
-  height: ${HOUR_HEIGHT}px;
-  border-bottom: 1px solid #ccc;
-`;
