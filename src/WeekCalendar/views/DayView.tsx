@@ -56,7 +56,7 @@ export const DayView = (props: Props) => {
     const result = new Map<string, EventData[]>();
 
     events
-      .sort((a, b) => {
+      .sort((b, a) => {
         return (
           (a.startDate?.getTime() || a.startDateTime!.getTime()) -
           (b.startDate?.getTime() || b.startDateTime!.getTime())
@@ -135,40 +135,31 @@ export const DayView = (props: Props) => {
         let count = 1;
         let offset = eventData.offset;
 
-        eventData.overlaps.forEach((overlapData) => {
-          const mainInterval = {
+        eventData.overlaps.forEach((eventData) => {
+          const eventInterval = {
             start: eventData.event.startDateTime!,
             end: eventData.event.endDateTime!
           };
 
-          const overlapInterval = {
-            start: overlapData.event.startDateTime!,
-            end: overlapData.event.endDateTime!
-          };
-
-          const areOverlapping = areIntervalsOverlapping(
-            mainInterval,
-            overlapInterval
-          );
-
-          if (areOverlapping && overlapData.offset <= offset) {
-            offset += 1;
-          }
-
-          const overlapsItems = overlapData.overlaps.filter((overlapData) => {
+          const overlappingItems = eventData.overlaps.filter((overlapData) => {
             const overlapInterval = {
               start: overlapData.event.startDateTime!,
               end: overlapData.event.endDateTime!
             };
 
-            return areIntervalsOverlapping(mainInterval, overlapInterval);
+            return areIntervalsOverlapping(eventInterval, overlapInterval);
           });
 
-          count = Math.max(count, overlapsItems.length + 1);
+          count = Math.max(count, overlappingItems.length);
         });
 
         eventData.width = 1 / count;
-        eventData.offset = offset;
+      });
+    });
+
+    result.forEach((day) => {
+      day.forEach((dataEvent) => {
+        console.log(dataEvent.event.title, dataEvent.width);
       });
     });
 
