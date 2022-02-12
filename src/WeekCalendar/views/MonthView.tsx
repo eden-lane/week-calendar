@@ -28,7 +28,7 @@ type Props = {
   range: Interval;
 };
 
-type DayData<TData = unknown> = {
+type EventData<TData = unknown> = {
   width: number;
   top: number;
   event: CalendarEvent<TData>;
@@ -50,7 +50,7 @@ export const MonthView = (props: Props) => {
   const [date, setDate] = useState<Date>(new Date(range.start));
   const [height, setHeight] = useState(-1);
 
-  const eventsMap = useMemo<Map<string, DayData[]>>(() => {
+  const eventsMap = useMemo<Map<string, EventData[]>>(() => {
     const result = new Map();
     const places = new Map<string, boolean[]>();
     events
@@ -68,7 +68,7 @@ export const MonthView = (props: Props) => {
           });
 
           let lastWeekWithEvent = 0;
-          let dayData: DayData;
+          let dayData: EventData;
 
           const place = places.get(format(event.startDate, DATE_FORMAT)) || [];
 

@@ -9,10 +9,23 @@ import {
   startOfToday,
   endOfToday
 } from "date-fns";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import styled from "styled-components";
 import { useVirtualized } from "../hooks/useVirtualized";
+import { getPositionOfEvent } from "./utils/dayView";
 import { CalendarEvent } from "../types";
+
+type EventData<TData = unknown> = {
+  offset: number;
+  width: number;
+  event: CalendarEvent<TData>;
+};
 
 type Props = {
   range: Interval;
@@ -24,6 +37,7 @@ const HOUR_HEIGHT = 100;
 const HEADER_HEIGHT = 50;
 const ASIDE_WIDTH = 60;
 const REMOVE_ITEMS_COUNT = 10;
+const DATE_FORMAT = "dd.MM.yyyy";
 
 export const DayView = (props: Props) => {
   const { range, events, daysCount } = props;
@@ -36,9 +50,87 @@ export const DayView = (props: Props) => {
   const itemsDiff = useRef(-1);
   const scrollPosition = useRef(-1);
 
+  const eventsMap = useMemo<Map<string, EventData[]>>(() => {
+    const result = new Map();
+
+    events.forEach((event) => {
+      if (event.startDateTime && event.endDateTime) {
+        const days = eachDayOfInterval({
+          start: event.startDateTime,
+          end: event.endDateTime
+        });
+
+        console.log(days);
+
+        days.forEach((day, index) => {
+          const key = format(day, DATE_FORMAT);
+          const l = days.length;
+          let startDateTime;
+          let endDateTime;
+
+          if (index === 0) {
+            startDateTime = event.startDateTime;
+          } else {
+            startDateTime = startOfDay(day);
+          }
+
+          if (index === l - 1) {
+            endDateTime = event.endDateTime;
+          } else {
+            endDateTime = endOfDay(day);
+          }
+
+          const dateEvents = result.get(key) || [];
+          dateEvents.push({
+            event,
+            offset: 0,
+            width: 1,
+            startDateTime,
+            endDateTime
+          });
+
+          result.set(key, dateEvents);
+        });
+      }
+    });
+
+    return result;
+  }, [events]);
+
+  console.log(eventsMap);
+
   useEffect(() => {
     setWidth((rootRef.current?.offsetWidth ?? 0) - ASIDE_WIDTH);
   }, []);
+
+  const renderEvents = (date: Date) => {
+    const key = format(date, DATE_FORMAT);
+    const events = eventsMap.get(key) || [];
+
+    return events.map((event) => {
+      const position = getPositionOfEvent(event.event, {
+        startTime: startOfDay(date),
+        endTime: endOfDay(date),
+        hourHeight: HOUR_HEIGHT
+      });
+
+      const eventWidth = (width / daysCount - 10) * event.width;
+
+      return (
+        <Event
+          data-event
+          style={{
+            top: position.top,
+            height: position.height,
+            width: eventWidth
+          }}
+          key={event.event.id}
+        >
+          {event.event.title}
+        </Event>
+      );
+    });
+  };
 
   const renderItem = (day: Date, style: { offset: number }) => {
     const hours = eachHourOfInterval({
@@ -56,6 +148,7 @@ export const DayView = (props: Props) => {
           width: `${width / daysCount}px`
         }}
       >
+        {renderEvents(day)}
         {hours.map((h) => (
           <Hour key={h} />
         ))}
@@ -110,16 +203,16 @@ export const DayView = (props: Props) => {
   useEffect(() => {
     setDays(
       getDays({
-        start: sub(date, { weeks: 3 }),
-        end: add(date, { weeks: 3 })
+        start: sub(date, { weeks: 1 }),
+        end: add(date, { weeks: 1 })
       })
     );
   }, []);
 
-  console.log(days.length);
-
   const handleScroll = (ev) => {
     onScroll(ev);
+
+    direction.current = 0;
 
     if (days.length === 0) return;
 
@@ -138,7 +231,7 @@ export const DayView = (props: Props) => {
       contRef.current?.scroll({
         left: (itemsDiff.current * width) / daysCount
       });
-    } else {
+    } else if (direction.current === 1) {
       contRef.current?.scroll({
         left: scrollPosition.current - itemsDiff.current * (width / daysCount)
       });
@@ -221,6 +314,7 @@ const Date = styled.div<{ width: number }>`
 `;
 
 const Day = styled.div`
+  position: relative;
   height: 100%;
   display: inline-block;
   flex-shrink: 0;
@@ -261,4 +355,11 @@ const AsideHour = styled.div`
 const AsideHourLabel = styled.span`
   transform: translateY(-10px);
   z-index: 2;
+`;
+
+const Event = styled.div`
+  position: absolute;
+  background: #03a9f4;
+  font-size: 12px;
+  color: #fff;
 `;
