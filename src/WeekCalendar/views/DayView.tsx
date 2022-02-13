@@ -51,6 +51,7 @@ export const DayView = (props: Props) => {
   const direction = useRef(0);
   const itemsDiff = useRef(-1);
   const scrollPosition = useRef(-1);
+  const scrollTimeout = useRef<number>();
 
   const eventsMap = useMemo<Map<string, EventData[]>>(() => {
     const result = new Map<string, EventData[]>();
@@ -138,10 +139,19 @@ export const DayView = (props: Props) => {
         mainEventData.overlaps
           .sort((a, b) => a.offset - b.offset)
           .forEach((item: EventData) => {
-            if (item.offset === offset) {
+            if (item.offset === offset || offset === -1) {
               offset++;
             }
           });
+
+        if (mainEventData.event.title === "Task 5") {
+          console.log(
+            mainEventData.overlaps
+              .sort((a, b) => a.offset - b.offset)
+              .map((d) => `${d.event.title} - ${d.offset}`)
+              .join(", ")
+          );
+        }
 
         mainEventData.overlaps.forEach((eventData) => {
           const eventInterval = {
@@ -293,8 +303,20 @@ export const DayView = (props: Props) => {
     );
   }, []);
 
+  const handleStoppedScrolling = () => {
+    contRef.current?.scroll({
+      left:
+        contRef.current?.scrollLeft -
+        (contRef.current?.scrollLeft % (width / daysCount)),
+      behavior: "smooth"
+    });
+  };
+
   const handleScroll = (ev) => {
     onScroll(ev);
+    clearTimeout(scrollTimeout.current);
+
+    scrollTimeout.current = setTimeout(handleStoppedScrolling, 700);
 
     direction.current = 0;
 
