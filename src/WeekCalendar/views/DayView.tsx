@@ -8,7 +8,9 @@ import {
   format,
   startOfToday,
   endOfToday,
-  areIntervalsOverlapping
+  areIntervalsOverlapping,
+  startOfWeek,
+  isSameDay
 } from "date-fns";
 import React, {
   useEffect,
@@ -52,6 +54,7 @@ export const DayView = (props: Props) => {
   const itemsDiff = useRef(-1);
   const scrollPosition = useRef(-1);
   const scrollTimeout = useRef<number>();
+  const [isFirstRender, setFirstRender] = useState(true);
 
   const eventsMap = useMemo<Map<string, EventData[]>>(() => {
     const result = new Map<string, EventData[]>();
@@ -297,8 +300,8 @@ export const DayView = (props: Props) => {
   useEffect(() => {
     setDays(
       getDays({
-        start: sub(date, { weeks: 1 }),
-        end: add(date, { weeks: 1 })
+        start: sub(date, { days: 7 }),
+        end: add(date, { days: 7 })
       })
     );
   }, []);
@@ -333,6 +336,19 @@ export const DayView = (props: Props) => {
   };
 
   useLayoutEffect(() => {
+    if (isFirstRender && visibleItems.length) {
+      const fisrtDayIndex = visibleItems.findIndex((d) => {
+        return isSameDay(d, startOfWeek(new Date()));
+      });
+
+      console.log(fisrtDayIndex);
+
+      contRef.current?.scroll({
+        left: (width / daysCount) * fisrtDayIndex
+      });
+      setFirstRender(false);
+    }
+
     if (direction.current === -1) {
       contRef.current?.scroll({
         left: (itemsDiff.current * width) / daysCount
@@ -361,10 +377,10 @@ export const DayView = (props: Props) => {
           </Aside>
           <Header>
             {visibleItems.map((date) => (
-              <Date key={date.getTime()} width={width / daysCount}>
+              <DateLabel key={date.getTime()} width={width / daysCount}>
                 <div>{format(date, "EE")}</div>
                 <div>{format(date, "dd, MMM")}</div>
-              </Date>
+              </DateLabel>
             ))}
           </Header>
           <Content style={{ width: containerStyle.size }}>
@@ -403,7 +419,7 @@ const Header = styled.header`
   z-index: 1;
 `;
 
-const Date = styled.div<{ width: number }>`
+const DateLabel = styled.div<{ width: number }>`
   width: ${(p) => p.width}px;
   display: inline-block;
   padding: 1px 5px;

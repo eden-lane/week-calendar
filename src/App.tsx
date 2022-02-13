@@ -1,5 +1,5 @@
 import { createGlobalStyle } from "styled-components";
-import { endOfMonth, startOfMonth } from "date-fns";
+import { endOfMonth, startOfMonth, startOfWeek } from "date-fns";
 import styled from "styled-components";
 import { CalendarEvent, CalendarView } from "./WeekCalendar/types";
 import { WeekCalendar } from "./WeekCalendar/WeekCalendar";
@@ -98,7 +98,7 @@ export default function App() {
       <WeekCalendar<Task>
         view={CalendarView.Week}
         events={events}
-        range={{ start: startOfMonth(new Date()), end: endOfMonth(new Date()) }}
+        range={{ start: startOfWeek(new Date()), end: startOfWeek(new Date()) }}
       />
     </Root>
   );
