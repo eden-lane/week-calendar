@@ -37,6 +37,8 @@ type Props = {
   daysCount: number;
 };
 
+console.clear();
+
 const HOUR_HEIGHT = 100;
 const HEADER_HEIGHT = 50;
 const ASIDE_WIDTH = 60;
@@ -98,7 +100,7 @@ export const DayView = (props: Props) => {
                 startDateTime,
                 endDateTime
               },
-              offset: 0,
+              offset: -1,
               width: 1,
               overlaps: []
             });
@@ -117,10 +119,6 @@ export const DayView = (props: Props) => {
         };
 
         day.forEach((eventData) => {
-          if (mainEventData === eventData) {
-            return;
-          }
-
           const eventInterval = {
             start: eventData.event.startDateTime!,
             end: eventData.event.endDateTime!
@@ -142,39 +140,62 @@ export const DayView = (props: Props) => {
         mainEventData.overlaps
           .sort((a, b) => a.offset - b.offset)
           .forEach((item: EventData) => {
-            if (item.offset === offset || offset === -1) {
+            if (item.offset === offset) {
               offset++;
             }
           });
 
-        if (mainEventData.event.title === "Task 5") {
-          console.log(
-            mainEventData.overlaps
-              .sort((a, b) => a.offset - b.offset)
-              .map((d) => `${d.event.title} - ${d.offset}`)
-              .join(", ")
-          );
-        }
+        // if (mainEventData.event.title === "Task 6") {
+        //   console.log(
+        //     mainEventData.overlaps
+        //       .sort((a, b) => a.offset - b.offset)
+        //       .map((d) => `${d.event.title} - ${d.offset}`)
+        //       .join(", ")
+        //   );
+        // }
+
+        const mainInterval = {
+          start: mainEventData.event.startDateTime!,
+          end: mainEventData.event.endDateTime!
+        };
 
         mainEventData.overlaps.forEach((eventData) => {
+          // Task 4
           const eventInterval = {
             start: eventData.event.startDateTime!,
             end: eventData.event.endDateTime!
           };
 
           const overlappingItems = eventData.overlaps.filter((overlapData) => {
+            // 2, 4, 3, 5
             const overlapInterval = {
               start: overlapData.event.startDateTime!,
               end: overlapData.event.endDateTime!
             };
 
-            const areOverlapping = areIntervalsOverlapping(
-              eventInterval,
+            // const areOverlapping = areIntervalsOverlapping(
+            //   eventInterval,
+            //   overlapInterval
+            // );
+
+            const areOverlappingMain = areIntervalsOverlapping(
+              mainInterval,
               overlapInterval
             );
 
-            return areOverlapping;
+            return (
+              areOverlappingMain &&
+              eventData.overlaps.every((o) => {
+                return overlapData.overlaps.includes(o);
+              })
+            );
           });
+
+          count = Math.max(count, overlappingItems.length);
+
+          if (mainEventData.event.title === "Task 4") {
+            console.log(eventData.event.title, overlappingItems);
+          }
 
           count = Math.max(count, overlappingItems.length);
         });
@@ -317,9 +338,11 @@ export const DayView = (props: Props) => {
 
   const handleScroll = (ev) => {
     onScroll(ev);
-    clearTimeout(scrollTimeout.current);
+    // clearTimeout(scrollTimeout.current);
 
-    scrollTimeout.current = setTimeout(handleStoppedScrolling, 700);
+    // if (!isFirstRender) {
+    //   scrollTimeout.current = setTimeout(handleStoppedScrolling, 700);
+    // }
 
     direction.current = 0;
 
