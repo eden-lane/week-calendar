@@ -166,35 +166,37 @@ export const DayView = (props: Props) => {
             end: eventData.event.endDateTime!
           };
 
-          const overlappingItems = eventData.overlaps.filter((overlapData) => {
-            // 2, 4, 3, 5
+          let overlappingItems = eventData.overlaps.filter((overlapData) => {
             const overlapInterval = {
               start: overlapData.event.startDateTime!,
               end: overlapData.event.endDateTime!
             };
-
-            // const areOverlapping = areIntervalsOverlapping(
-            //   eventInterval,
-            //   overlapInterval
-            // );
 
             const areOverlappingMain = areIntervalsOverlapping(
               mainInterval,
               overlapInterval
             );
 
-            return (
-              areOverlappingMain &&
-              eventData.overlaps.every((o) => {
-                return overlapData.overlaps.includes(o);
-              })
-            );
+            return areOverlappingMain;
+          });
+
+          overlappingItems = overlappingItems.filter((overlapData) => {
+            return overlappingItems.every((o) => {
+              return overlapData.overlaps.includes(o);
+            });
           });
 
           count = Math.max(count, overlappingItems.length);
 
-          if (mainEventData.event.title === "Task 4") {
-            console.log(eventData.event.title, overlappingItems);
+          if (
+            mainEventData.event.title === "Task 4" &&
+            eventData.event.title === "Task 2"
+          ) {
+            console.log(
+              eventData.event.title,
+              eventData.overlaps,
+              overlappingItems
+            );
           }
 
           count = Math.max(count, overlappingItems.length);
