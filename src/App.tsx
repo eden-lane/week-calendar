@@ -102,7 +102,7 @@ export default function App() {
     <Root>
       <GlobalStyle />
       <WeekCalendar<Task>
-        view={CalendarView.Week}
+        view={CalendarView.Month}
         events={events}
         range={{ start: startOfWeek(new Date()), end: startOfWeek(new Date()) }}
       />

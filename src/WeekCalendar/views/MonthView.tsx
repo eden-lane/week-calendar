@@ -36,7 +36,7 @@ type EventData<TData = unknown> = {
 
 const DAY_HEIGHT = 100;
 const REMOVE_ITEMS_COUNT = 10;
-const OFFSCREEN_ITEMS = 10;
+const OFFSCREEN_ITEMS = 14;
 
 let newItems = 0;
 let direction = 0;
@@ -107,7 +107,7 @@ export const MonthView = (props: Props) => {
     return result;
   }, [events]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setHeight(rootRef.current?.offsetHeight ?? 0);
   }, []);
 
