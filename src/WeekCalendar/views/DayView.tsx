@@ -112,98 +112,53 @@ export const DayView = (props: Props) => {
 
     // Filling up array of overlapping events
     result.forEach((day) => {
+      const matrix: EventData[][] = [[]];
+
       day.forEach((mainEventData) => {
-        const mainEventInterval = {
-          start: mainEventData.event.startDateTime!,
-          end: mainEventData.event.endDateTime!
-        };
+        let rowNumber = 0;
+        let colNumber = 0;
 
-        day.forEach((eventData) => {
-          const eventInterval = {
-            start: eventData.event.startDateTime!,
-            end: eventData.event.endDateTime!
-          };
-
-          if (areIntervalsOverlapping(mainEventInterval, eventInterval)) {
-            mainEventData.overlaps.push(eventData);
-          }
-        });
-      });
-    });
-
-    // Setting up width
-    result.forEach((day) => {
-      day.forEach((mainEventData) => {
-        let count = 1;
-        let offset = 0;
-
-        mainEventData.overlaps
-          .sort((a, b) => a.offset - b.offset)
-          .forEach((item: EventData) => {
-            if (item.offset === offset) {
-              offset++;
-            }
-          });
-
-        // if (mainEventData.event.title === "Task 6") {
-        //   console.log(
-        //     mainEventData.overlaps
-        //       .sort((a, b) => a.offset - b.offset)
-        //       .map((d) => `${d.event.title} - ${d.offset}`)
-        //       .join(", ")
-        //   );
-        // }
+        let row = matrix[rowNumber] || [[]];
+        let col = row[colNumber];
 
         const mainInterval = {
           start: mainEventData.event.startDateTime!,
           end: mainEventData.event.endDateTime!
         };
 
-        mainEventData.overlaps.forEach((eventData) => {
-          // Task 4
-          const eventInterval = {
-            start: eventData.event.startDateTime!,
-            end: eventData.event.endDateTime!
+        while (col) {
+          const colInterval = {
+            start: col.event.startDateTime!,
+            end: col.event.endDateTime!
           };
 
-          let overlappingItems = eventData.overlaps.filter((overlapData) => {
-            const overlapInterval = {
-              start: overlapData.event.startDateTime!,
-              end: overlapData.event.endDateTime!
-            };
+          const areOverlapping = areIntervalsOverlapping(
+            mainInterval,
+            colInterval
+          );
 
-            const areOverlappingMain = areIntervalsOverlapping(
-              mainInterval,
-              overlapInterval
-            );
-
-            return areOverlappingMain;
-          });
-
-          overlappingItems = overlappingItems.filter((overlapData) => {
-            return overlappingItems.every((o) => {
-              return overlapData.overlaps.includes(o);
-            });
-          });
-
-          count = Math.max(count, overlappingItems.length);
-
-          if (
-            mainEventData.event.title === "Task 4" &&
-            eventData.event.title === "Task 2"
-          ) {
-            console.log(
-              eventData.event.title,
-              eventData.overlaps,
-              overlappingItems
-            );
+          if (!areOverlapping) {
+            rowNumber++;
+            colNumber = 0;
+            row = matrix[rowNumber] || [];
+            matrix[rowNumber] = row;
+            col = row[colNumber];
+          } else {
+            colNumber++;
+            col = row[colNumber];
           }
+        }
 
-          count = Math.max(count, overlappingItems.length);
+        matrix[rowNumber][colNumber] = mainEventData;
+      });
+
+      console.log(matrix);
+
+      matrix.forEach((row, rowNumber) => {
+        row.forEach((eventData, colNumber) => {
+          eventData.offset = colNumber;
+          eventData.width = 1 / row.length;
         });
-
-        mainEventData.width = Math.min(1 / count, 1 / (offset + 1));
-        mainEventData.offset = offset;
       });
     });
 
@@ -343,7 +298,7 @@ export const DayView = (props: Props) => {
     // clearTimeout(scrollTimeout.current);
 
     // if (!isFirstRender) {
-    //   scrollTimeout.current = setTimeout(handleStoppedScrolling, 700);
+    //   scrollTimeout.current = setTimeout(handleStoppedScrolling, 100);
     // }
 
     direction.current = 0;
